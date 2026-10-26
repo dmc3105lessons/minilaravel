@@ -2,13 +2,14 @@
 
 namespace MiniLaravel\Orm;
 
+use JsonSerializable;
 use MiniLaravel\Di\Container;
 use ReflectionClass;
 
 use PDO;
 use RuntimeException;
 
-class Model{
+class Model implements JsonSerializable{
     private static Database $database;
     private $fields = [];
     protected $fillable;
@@ -85,6 +86,11 @@ class Model{
         $this->fields[$name] = $value;
     }
 
+    public function jsonSerialize(): mixed
+    {
+        return $this->fields;
+    }
+
     public function __toString()
     {
         return json_encode($this->fields);
@@ -95,6 +101,11 @@ class Model{
     }
 
     public function delete() : void {
+        if(count($this->fields) == 0)
+            throw new RuntimeException("Cannot delete the entity without any fields");
+        if(!isset($this->fields["id"]))
+            throw new RuntimeException("Cannot delete the entity without an id");
+
         $tablename = static::getTableName();
 
         $sql = "DELETE FROM $tablename WHERE id=:id";
@@ -107,6 +118,9 @@ class Model{
     }
 
     public function save() : void {
+        if(count($this->fields) == 0)
+            throw new RuntimeException("Cannot save the entity without any fields");
+        
         if (isset($this->fields["id"]))
         {
             $this->update();
@@ -116,6 +130,10 @@ class Model{
     }
     
     private function insert() : void {
+        if(count($this->fields) == 0)
+            throw new RuntimeException("Cannot insert the entity without any fields");
+        
+
         $tablename = static::getTableName();
         
         $columns = array_keys($this->fields);
@@ -135,10 +153,15 @@ class Model{
             ->prepare($sql);
 
         $statement->execute($valuesData);
-        $this->fields['id'] = self::$database->getPdo()->lastInsertId();
+        $this->fields['id'] = intval(self::$database->getPdo()->lastInsertId());
     }
 
     private function update() : void {
+        if(count($this->fields) == 0)
+            throw new RuntimeException("Cannot insert the entity without any fields");
+        if(!isset($this->fields["id"]))
+            throw new RuntimeException("Cannot update the entity without an id");
+
         $tablename = static::getTableName();
         
         $valuesData = [];

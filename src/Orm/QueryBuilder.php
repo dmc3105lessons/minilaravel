@@ -47,7 +47,8 @@ class QueryBuilder
         $sql = "SELECT * FROM $this->tableName ";
         
         $whereString = implode(" AND ", $this->whereList);
-        $sql .= "WHERE $whereString ";
+        if (count($this->whereList) != 0)
+            $sql .= "WHERE $whereString ";
 
         if (count($this->orderList) > 0)
         {
