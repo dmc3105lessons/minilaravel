@@ -6,13 +6,13 @@ use RuntimeException;
 
 class TemplateRouteRequestMatcher implements RequestMatcher {
     private TemplatePathRegexCompiler $compiler;
-    private string $templatePathRegex;
+    public string $templatePathRegex;
     private string $method;
     
-    public function __construct(TemplatePathRegexCompiler $compiler, string $templateRoute, string $method = "GET")
+    public function __construct(TemplatePathRegexCompiler $compiler, string $templatePath, string $method = "GET")
     {
         $this->compiler = $compiler;
-        $this->templatePathRegex = $this->compilePath($templateRoute);
+        $this->templatePathRegex = $this->compilePath($templatePath);
         $this->method = $method;
     }
 
@@ -32,7 +32,7 @@ class TemplateRouteRequestMatcher implements RequestMatcher {
     }
     
     private function compilePath($templatePath) : string {
-        return $this->compiler->compile($templatePath);
+        return "~" . $this->compiler->compile($templatePath) . "~";
     }   
 }
 

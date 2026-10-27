@@ -8,8 +8,8 @@ class TemplateRouteRegexCompilerFactory
         private TemplatePathRegexCompiler $compiler
     ) {}
 
-    public function createMatcher(string $templateRoute, string $method = "GET")
+    public function createMatcher(string $templatePath, string $method = "GET")
     {
-        return new TemplateRouteRequestMatcher($this->compiler, $templateRoute, $method);
+        return new TemplateRouteRequestMatcher($this->compiler, $templatePath, $method);
     }
 }
