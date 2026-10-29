@@ -20,15 +20,26 @@ class TemplateRouteRequestMatcher implements RequestMatcher {
     {
         if ($request->method() != $this->method)
             return false;
-
-        $result = preg_match($this->templatePathRegex, $request->path());
         
+        $matches = [];
+        $result = preg_match($this->templatePathRegex, $request->path(), $matches);
+        $matches = array_filter(
+            $matches,
+            fn($key) => is_string($key),
+            ARRAY_FILTER_USE_KEY
+        );
+
         if ($result === false)
         {
             throw new RuntimeException("Invalid regular expression");
         }
 
-        return $result == 1 ? true : false;
+        if ($result == 1)
+        {
+            $request->putPathVariables($matches);
+            return true;
+        }
+        return false;
     }
     
     private function compilePath($templatePath) : string {

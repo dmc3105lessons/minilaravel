@@ -3,6 +3,8 @@
 namespace MiniLaravel\Routing;
 
 class Request {
+    private array $pathVariables = [];
+
     public function method() : string {
         return $_SERVER["REQUEST_METHOD"] ?? "GET";
     }
@@ -21,5 +23,18 @@ class Request {
         $data = json_decode(file_get_contents("php://input", true), true) ?? [];
         array_replace($_POST, $data);
         return $key === null ? $data : ($data[$key] ?? null);
+    }
+
+    public function putPathVariables(array $pathVariables)
+    {
+        $this->pathVariables = array_merge($this->pathVariables, $pathVariables);
+    }
+
+    public function pathVariable(?string $key = null) : mixed {
+        if ($key == null)
+            return $this->pathVariables;
+        if (!isset($this->pathVariables[$key]))
+            return null;
+        return $this->pathVariables[$key];
     }
 }

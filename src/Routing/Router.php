@@ -23,14 +23,13 @@ class Router
     public function dispatch() : mixed {
         $request = new Request();
 
-        // [$controllerClass, $action] = $this->mappings[$request->path()][$request->method()];
         foreach ($this->endpoints as $endpoint) {
             $matcher = $endpoint[0];
             if ($matcher->match($request))
             {
                 $controllerClass = $endpoint[1];
                 $action = $endpoint[2];
-                return $this->performControllerAction($controllerClass, $action);
+                return $this->performControllerAction($controllerClass, $action, $request);
             }
         }
         throw new RuntimeException("No route for this request");
@@ -52,33 +51,19 @@ class Router
 
             $matcher = $this->matcherFactory->createMatcher($route->path, $route->method);
             $this->endpoints[] = [$matcher, $controllerClass, $method->getName()];
-            //$this->mappings[$route->path][$route->method] = [$controllerClass, $method->getName()];
         }
     }
 
-    public function performControllerAction(string $controllerClass, string $action) : mixed {
+    public function performControllerAction(string $controllerClass, string $action, Request $request) : mixed {
         $reflection = new ReflectionClass($controllerClass);
         $method= $reflection->getMethod($action);
 
         $arguments = [];
-        $request = new Request();
-        $matcher = null;
-        foreach ($this->endpoints as $endpoint) {
-            if ($endpoint[1] == $controllerClass and $endpoint[2] == $action) {
-                $matcher = $endpoint[0];
-                break;
-            }
-        }
-        $template = $matcher->templatePathRegex;
-        $matches = [];
-        preg_match($template, $request->path(), $matches);
         foreach ($method->getParameters() as $parameter)
         {
-            if (isset($matches[$parameter->getName()])) {
-                $arguments[] = $matches[$parameter->getName()];
-                continue;
-            }
-            $arguments[] = $this->container->get($parameter->getType()->getName());
+            $arguments[] = 
+                $request->pathVariable($parameter->getName())
+                ?: $this->container->get($parameter->getType()->getName());
         }
         $controller = $this->container->get($controllerClass);
         return $method->invokeArgs($controller, $arguments);
